@@ -1,13 +1,14 @@
 from datetime import date
 from marshmallow import ValidationError, fields, validate, validates_schema, Schema
+from flask_bcrypt import Bcrypt
 from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy import CheckConstraint, MetaData
 from sqlalchemy.ext.hybrid import hybrid_property
 from sqlalchemy.orm import validates
-from config import bcrypt, db
 
 meta = MetaData()
 db = SQLAlchemy(metadata=meta)
+bcrypt = Bcrypt()
 
 #===================
 #USER MODEL
@@ -16,9 +17,9 @@ class User(db.Model):
     __tablename__ = 'users'
     id = db.Column(db.Integer, primary_key=True)
     username = db.Column(db.String, nullable=False)
-    _password_hash = db.Column(db.Varchar, nullable=False)
+    _password_hash = db.Column(db.String, nullable=False)
 
-    journalEntries = db.relationship('JournalEntry', backpopulates='user')
+    journalEntries = db.relationship('JournalEntry', back_populates='user')
 
     @hybrid_property
     def password_hash(self):
@@ -45,9 +46,11 @@ class JournalEntry(db.Model):
     year_created = db.Column(db.Date, default=date.today)
     user_id = db.Column(db.Integer, db.ForeignKey('users.id'))
 
-    user = db.relationship('User', backpopulates='journalEntries')
+    user = db.relationship('User', back_populates='journalEntries')
 
-
+#=========
+#SCHEMAS
+#=========
 class UserSchema(Schema):
     id = fields.Int(dump_only=True)
     username = fields.Str(required=True, validate=validate.Length(min=1))
