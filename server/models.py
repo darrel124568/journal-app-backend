@@ -9,7 +9,6 @@ from config import bcrypt, db
 meta = MetaData()
 db = SQLAlchemy(metadata=meta)
 
-
 #===================
 #USER MODEL
 #===================
@@ -43,7 +42,32 @@ class JournalEntry(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     title = db.Column(db.String, nullable=False)
     content = db.Column(db.String, nullable=False)
-    year_created = db.Column(db.Date, default = date.today().year)
+    year_created = db.Column(db.Date, default=date.today)
     user_id = db.Column(db.Integer, db.ForeignKey('users.id'))
 
     user = db.relationship('User', backpopulates='journalEntries')
+
+
+class UserSchema(Schema):
+    id = fields.Int(dump_only=True)
+    username = fields.Str(required=True, validate=validate.Length(min=1))
+    password = fields.Str(
+        required=True,
+        load_only=True,
+        attribute='password_hash',
+        validate=validate.Length(min=1),
+    )
+    journalEntries = fields.Nested(
+        lambda: JournalEntrySchema(exclude=('user',)),
+        many=True,
+        dump_only=True,
+    )
+
+
+class JournalEntrySchema(Schema):
+    id = fields.Int(dump_only=True)
+    title = fields.Str(required=True, validate=validate.Length(min=1))
+    content = fields.Str(required=True, validate=validate.Length(min=1))
+    year_created = fields.Date(dump_only=True)
+    user_id = fields.Int(required=True)
+    user = fields.Nested(UserSchema, dump_only=True, exclude=('journalEntries',))
