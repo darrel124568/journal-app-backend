@@ -11,6 +11,7 @@ sqlalchemy = "*"
 flask-migrate = "*"
 flask-bcrypt = "*"
 flask-restful = "*"
+faker = "*"
 
 [dev-packages]
 
