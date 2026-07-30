@@ -14,9 +14,12 @@ db = SQLAlchemy(metadata=meta)
 #USER MODEL
 #===================
 class User(db.Model):
+    __tablename__ = 'users'
     id = db.Column(db.Integer, primary_key=True)
     username = db.Column(db.String, nullable=False)
     _password_hash = db.Column(db.Varchar, nullable=False)
+
+    journalEntries = db.relationship('JournalEntry', backpopulates='user')
 
     @hybrid_property
     def password_hash(self):
@@ -35,3 +38,12 @@ class User(db.Model):
 #==================
 #JournalEntry MODEL
 #==================
+class JournalEntry(db.Model):
+    __tablename__ = 'journalEntries'
+    id = db.Column(db.Integer, primary_key=True)
+    title = db.Column(db.String, nullable=False)
+    content = db.Column(db.String, nullable=False)
+    year_created = db.Column(db.Date, default = date.today().year)
+    user_id = db.Column(db.Integer, db.ForeignKey('users.id'))
+
+    user = db.relationship('User', backpopulates='journalEntries')
