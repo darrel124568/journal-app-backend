@@ -117,7 +117,9 @@ class Patch(Resource):
         except Exception:
             db.session.rollback()
             return {"error": "could not update entry"}, 500
-
+#=======================
+#DELETE JOURNAL ENTRIES
+#=======================
 class Delete(Resource):
     def delete(self, id):
         entry = JournalEntry.query.filter_by(
