@@ -1,6 +1,6 @@
 from config import app, db
 from flask_restful import Resource, Api
-from flask import request, jsonify, session
+from flask import request, session
 from marshmallow import ValidationError
 from models import User, UserSchema, JournalEntry, JournalEntrySchema
 
@@ -118,6 +118,22 @@ class Patch(Resource):
             db.session.rollback()
             return {"error": "could not update entry"}, 500
 
+class Delete(Resource):
+    def delete(self, id):
+        entry = JournalEntry.query.filter_by(
+            id=id, user_id=session["user_id"]
+        ).first()
+        if not entry:
+            return {}, 404
+
+        try:
+            db.session.delete(entry)
+            db.session.commit()
+            return {"message": "deleted successfully"}, 200
+        except Exception:
+            db.session.rollback()
+            return {"error": "could not delete entry"}, 500
+
 api.add_resource(Signup, '/signup', endpoint='signup')
 api.add_resource(Login, '/login', endpoint='login')
 api.add_resource(CheckSession, '/checkSession', endpoint='checkSession')
@@ -125,6 +141,7 @@ api.add_resource(Logout, '/logout', endpoint='logout')
 api.add_resource(Entries, "/entries", endpoint='entries')
 api.add_resource(AddEntry, "/add_entry", endpoint='add_entry')
 api.add_resource(Patch, "/patch/<int:id>", endpoint='patch')
+api.add_resource(Delete, "/delete/<int:id>", endpoint='delete')
 
 if __name__ == "__main__":
     app.run(port=5555, debug=True)
