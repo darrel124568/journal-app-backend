@@ -93,6 +93,30 @@ class AddEntry(Resource):
             return {"error": "could not add user"}, 500
 
 
+#=======================
+#UPDATE JOURNAL ENTRIES
+#=======================
+class Patch(Resource):
+    def patch(self, id):
+        try:
+            entry = JournalEntry.query.filter_by(
+                id=id, user_id=session["user_id"]
+            ).first()
+            if not entry:
+                return {}, 404
+
+            data = JournalEntrySchema(partial=True, exclude=("user_id",)).load(
+                request.get_json(silent=True) or {}
+            )
+            for key, value in data.items():
+                setattr(entry, key, value)
+            db.session.commit()
+            return JournalEntrySchema().dump(entry), 200
+        except ValidationError as errors:
+            return {"errors": errors.messages}, 400
+        except Exception:
+            db.session.rollback()
+            return {"error": "could not update entry"}, 500
 
 api.add_resource(Signup, '/signup', endpoint='signup')
 api.add_resource(Login, '/login', endpoint='login')
@@ -100,7 +124,7 @@ api.add_resource(CheckSession, '/checkSession', endpoint='checkSession')
 api.add_resource(Logout, '/logout', endpoint='logout')
 api.add_resource(Entries, "/entries", endpoint='entries')
 api.add_resource(AddEntry, "/add_entry", endpoint='add_entry')
-api.add_resource(Patch, "/patch", endpoint='patch')
+api.add_resource(Patch, "/patch/<int:id>", endpoint='patch')
 
 if __name__ == "__main__":
     app.run(port=5555, debug=True)
