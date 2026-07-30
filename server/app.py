@@ -6,7 +6,7 @@ from models import User, UserSchema, JournalEntry, JournalEntrySchema
 
 api = Api(app=app)
 
-@app.before_request
+# Require authentication for every endpoint except account creation and login.
 def before_request():
     accepted = ["signup", "login"]
     if request.endpoint not in accepted and (not session.get("user_id")):
@@ -18,6 +18,7 @@ def before_request():
 class Signup(Resource):
     def post(self):
         try:
+            # Deserialize and validate the request before storing the new user.
             data = UserSchema().load(request.get_json())
             new_user = User(**data)
 
@@ -36,11 +37,13 @@ class Signup(Resource):
 class Login(Resource):
     def post(self):
         try:
+            # Treat a missing or malformed JSON body as an invalid login attempt instead of a bad request.
             data = request.get_json(silent=True) or {}
             username = data.get("username")
             password = data.get("password")
 
             user = User.query.filter_by(username=username).first()
+            # Store only the user id in the signed session after authentication.
             if user and user.authenticate(password):
                 session["user_id"] = user.id
                 return UserSchema().dump(user), 200
@@ -68,6 +71,7 @@ class Logout(Resource):
 #===========================================
 class Entries(Resource):
     def get(self):
+        # Pagination to avoid overwhelming the front-end
         page = request.args.get('page', 1, type=int)
         per_page = request.args.get('per_page', 5, type=int)
         entries = JournalEntry.query.filter_by(user_id=session["user_id"]).paginate(
@@ -81,6 +85,7 @@ class AddEntry(Resource):
     def post(self):
         try:
             data = request.get_json()
+            # Ownership is derived from the sessionnot the client
             data["user_id"] = session["user_id"]
             new_entry = JournalEntry(**JournalEntrySchema().load(data))
             db.session.add(new_entry)
@@ -108,6 +113,7 @@ class Patch(Resource):
             data = JournalEntrySchema(partial=True, exclude=("user_id",)).load(
                 request.get_json(silent=True) or {}
             )
+            # Apply only fields accepted by the partial schema validation.
             for key, value in data.items():
                 setattr(entry, key, value)
             db.session.commit()
