@@ -23,6 +23,10 @@ class Signup(Resource):
         except Exception:
             db.session.rollback()
             return {"error": "could not add user"}, 500
+
+#=============
+#LOGIN ROUTE
+#=============
 class Login(Resource):
     def post(self):
         try:
@@ -38,10 +42,30 @@ class Login(Resource):
 
         except Exception:
             return {"error": "could not login"}, 500
+#=============
+#CHECK SESSION ROUTE
+#=============
+class CheckSession(Resource):
+    def get(self):
+        if session.get('user_id'):
+            user = User.query.get(session["user_id"])
+            return UserSchema().dump(user), 200
+        return {}, 401
+#=============
+#LOGOUT ROUTE
+#=============
+class Logout(Resource):
+    def delete(self):
+        if session.get('user_id'):
+            session.pop("user_id")
+            return {}, 201
+        return {}, 401
 
 
 api.add_resource(Signup, '/signup', endpoint='signup')
 api.add_resource(Login, '/login', endpoint='login')
+api.add_resource(CheckSession, '/checkSession', endpoint='checkSession')
+api.add_resource(Logout, '/logout', endpoint='logout')
 
 if __name__ == "__main__":
     app.run(port=5555, debug=True)
