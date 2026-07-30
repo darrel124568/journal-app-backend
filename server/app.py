@@ -74,12 +74,33 @@ class Entries(Resource):
             page=page, per_page=per_page
         )
         return JournalEntrySchema(many=True).dump(entries.items), 200
+#=======================
+#POST TO JOURNAL ENTRIES
+#=======================
+class AddEntry(Resource):
+    def post(self):
+        try:
+            data = request.get_json()
+            data["user_id"] = session["user_id"]
+            new_entry = JournalEntry(**JournalEntrySchema().load(data))
+            db.session.add(new_entry)
+            db.session.commit()
+            return JournalEntrySchema().dump(new_entry), 201
+        except ValidationError as errors:
+            return {"errors": errors.messages}, 400
+        except Exception:
+            db.session.rollback()
+            return {"error": "could not add user"}, 500
+
+
 
 api.add_resource(Signup, '/signup', endpoint='signup')
 api.add_resource(Login, '/login', endpoint='login')
 api.add_resource(CheckSession, '/checkSession', endpoint='checkSession')
 api.add_resource(Logout, '/logout', endpoint='logout')
 api.add_resource(Entries, "/entries", endpoint='entries')
+api.add_resource(AddEntry, "/add_entry", endpoint='add_entry')
+api.add_resource(Patch, "/patch", endpoint='patch')
 
 if __name__ == "__main__":
     app.run(port=5555, debug=True)
