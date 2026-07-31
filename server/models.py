@@ -16,7 +16,7 @@ bcrypt = Bcrypt()
 class User(db.Model):
     __tablename__ = 'users'
     id = db.Column(db.Integer, primary_key=True)
-    username = db.Column(db.String, nullable=False)
+    username = db.Column(db.String, nullable=False, unique=True)
     _password_hash = db.Column(db.String, nullable=False)
 
     journalEntries = db.relationship('JournalEntry', back_populates='user')
