@@ -7,6 +7,7 @@ from models import User, UserSchema, JournalEntry, JournalEntrySchema
 api = Api(app=app)
 
 # Require authentication for every endpoint except account creation and login.
+@app.before_request
 def before_request():
     accepted = ["signup", "login"]
     if request.endpoint not in accepted and (not session.get("user_id")):
@@ -66,6 +67,29 @@ class Logout(Resource):
     def delete(self):
         session.pop("user_id")
         return {}, 201
+
+#=======================
+#DELETE USER ACCOUNT ROUTE
+#=======================
+class DeleteUser(Resource):
+    def delete(self, id):
+        # A signed-in user may delete only their own account.
+        if session.get("user_id") != id:
+            return {"error": "forbidden"}, 403
+
+        user = User.query.get(id)
+        if not user:
+            return {}, 404
+
+        try:
+            JournalEntry.query.filter_by(user_id=id).delete()
+            db.session.delete(user)
+            db.session.commit()
+            session.pop("user_id", None)
+            return {}, 204
+        except Exception:
+            db.session.rollback()
+            return {"error": "could not delete user"}, 500
 
 #===========================================
 #JOURNAL ENTRIES INDEX ROUTE WITH PAGINATION
@@ -147,6 +171,7 @@ api.add_resource(Signup, '/signup', endpoint='signup')
 api.add_resource(Login, '/login', endpoint='login')
 api.add_resource(CheckSession, '/check_session', endpoint='checkSession')
 api.add_resource(Logout, '/logout', endpoint='logout')
+api.add_resource(DeleteUser, '/users/<int:id>', endpoint='delete_user')
 api.add_resource(Entries, "/entries", endpoint='entries')
 api.add_resource(AddEntry, "/add_entry", endpoint='add_entry')
 api.add_resource(Patch, "/patch/<int:id>", endpoint='patch')
