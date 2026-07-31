@@ -110,7 +110,7 @@ class AddEntry(Resource):
     def post(self):
         try:
             data = request.get_json()
-            # Ownership is derived from the sessionnot the client
+            # Ownership is derived from the session not the client
             data["user_id"] = session["user_id"]
             new_entry = JournalEntry(**JournalEntrySchema().load(data))
             db.session.add(new_entry)
