@@ -22,9 +22,9 @@ class Signup(Resource):
             data = UserSchema().load(request.get_json())
             new_user = User(username=data["username"])
             new_user.password_hash = data["password_hash"]
-            session["user_id"] = new_user.id
             db.session.add(new_user)
             db.session.commit()
+            session["user_id"] = new_user.id
             return UserSchema().dump(new_user), 201
         except ValidationError as errors:
             return {"errors": errors.messages}, 400
@@ -145,7 +145,7 @@ class Delete(Resource):
 
 api.add_resource(Signup, '/signup', endpoint='signup')
 api.add_resource(Login, '/login', endpoint='login')
-api.add_resource(CheckSession, '/checkSession', endpoint='checkSession')
+api.add_resource(CheckSession, '/check_session', endpoint='checkSession')
 api.add_resource(Logout, '/logout', endpoint='logout')
 api.add_resource(Entries, "/entries", endpoint='entries')
 api.add_resource(AddEntry, "/add_entry", endpoint='add_entry')
