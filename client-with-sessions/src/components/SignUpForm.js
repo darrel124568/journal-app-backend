@@ -8,6 +8,16 @@ function SignUpForm({ onLogin }) {
   const [errors, setErrors] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
 
+  function formatErrors(errorResponse) {
+    const validationErrors = errorResponse.errors;
+
+    if (Array.isArray(validationErrors)) return validationErrors;
+    if (validationErrors && typeof validationErrors === "object") {
+      return Object.values(validationErrors).flat();
+    }
+    return [errorResponse.error || "Unable to sign up. Please try again."];
+  }
+
   function handleSubmit(e) {
     e.preventDefault();
     setErrors([]);
@@ -27,7 +37,7 @@ function SignUpForm({ onLogin }) {
       if (r.ok) {
         r.json().then((user) => onLogin(user));
       } else {
-        r.json().then((err) => setErrors(err.errors));
+        r.json().then((err) => setErrors(formatErrors(err)));
       }
     });
   }
