@@ -20,8 +20,9 @@ class Signup(Resource):
         try:
             # Deserialize and validate the request before storing the new user.
             data = UserSchema().load(request.get_json())
+            data.pop("password_confirmation")
             new_user = User(**data)
-
+            session["user_id"] = new_user.id
             db.session.add(new_user)
             db.session.commit()
             return UserSchema().dump(new_user), 201

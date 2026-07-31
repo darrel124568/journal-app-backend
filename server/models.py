@@ -60,11 +60,23 @@ class UserSchema(Schema):
         attribute='password_hash',
         validate=validate.Length(min=1),
     )
+    password_confirmation = fields.Str(
+        required=True,
+        load_only=True,
+        validate=validate.Length(min=1),
+    )
     journalEntries = fields.Nested(
         lambda: JournalEntrySchema(exclude=('user',)),
         many=True,
         dump_only=True,
     )
+
+    @validates_schema
+    def passwords_match(self, data, **kwargs):
+        if data['password_hash'] != data['password_confirmation']:
+            raise ValidationError(
+                {'password_confirmation': ['Passwords must match.']}
+            )
 
 
 class JournalEntrySchema(Schema):
